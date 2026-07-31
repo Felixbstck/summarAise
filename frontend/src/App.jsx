@@ -9,6 +9,8 @@ function App() {
   const [summary, setSummary] = useState('');
   const [docId, setDocId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
   
   const handleUpload = async () => {
     if (!file) return;
@@ -23,11 +25,10 @@ function App() {
         method: 'POST',
         body: formData,
       });
-      console.log("requesteed");
+
       const data = await response.json();
       setDocId(data.doc_id);
       setSummary(data.summary);
-      console.log(summary);
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -36,6 +37,30 @@ function App() {
     }
   }
   
+  const handleQuestion = async () => {
+    if (question=='') return;
+    setLoading(true);
+
+    const formData = {
+      'doc_id': docId,
+      'question': question,
+    };
+
+    try {
+      const response = await fetch('http://localhost:8000/ask', {
+        method: 'POST',
+        headers: {'CONTENT-TYPE': 'application/json'},
+        body: JSON.stringify(formData),
+      })
+      const data = await response.json();
+      console.log(data);
+      setAnswer(data.answer);
+    } catch (error) {
+      console.error('Question failed', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -50,6 +75,18 @@ function App() {
       </button>
       <h2>Summary</h2>
       <p>{summary}</p>
+
+      <div>
+        <input
+          type="text"
+          onChange={(e) => setQuestion(e.target.value)}
+        />
+        <button onClick={handleQuestion} disabled={question == '' || loading} >
+          {loading ? 'Answering...' : 'Ask'}
+        </button>
+        <h2>Answer</h2>
+        <p>{answer}</p>
+      </div>
     </>
   )
 }
