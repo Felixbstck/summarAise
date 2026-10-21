@@ -1,16 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 function App() {
   const [file, setFile] = useState(null);
-  const [summary, setSummary] = useState('');
   const [docId, setDocId] = useState('');
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({behaviour: 'smooth', block: 'nearest'})
+  }, [messages]);
+
+  // When a PDF is uploaded this hook updates the pdfUrl which we use to preview the file
+  useEffect(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file); 
+    setPdfUrl(url);
+    // As to not leak memory
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
   
   const handleUpload = async () => {
     if (!file) return;
@@ -28,7 +41,10 @@ function App() {
 
       const data = await response.json();
       setDocId(data.doc_id);
-      setSummary(data.summary);
+      setMessages([
+        ...messages,
+        {role: 'ai', text: data.summary}
+      ]);
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -38,8 +54,14 @@ function App() {
   }
   
   const handleQuestion = async () => {
-    if (question=='') return;
+    // If no question has been asked if a file hasn't been uploaded
+    if (question=='' || !docId) return;
     setLoading(true);
+
+    setMessages(messages => [
+      ...messages,
+      {role: 'user', text: question}
+    ])
 
     const formData = {
       'doc_id': docId,
@@ -54,38 +76,95 @@ function App() {
       })
       const data = await response.json();
       console.log(data);
-      setAnswer(data.answer);
+      setMessages(messages => [
+        ...messages,
+        {role: 'ai', text: data.answer}
+      ]);
+
+      
     } catch (error) {
       console.error('Question failed', error);
     } finally {
       setLoading(false);
+      // Clears question box
+      setQuestion('');
     }
   }
 
+  const handleDragOver = (e) => {
+    e.preventDefault(); // required, or the browser blocks the drop
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === 'application/pdf') {
+      setFile(droppedFile);
+    }
+  };
+
+  const listMessages = messages.map((message, i) => <li key={i} className={message.role}><p>{message.text}</p></li>);
+
   return (
     <>
+      <div className="app">
       <h1>summarAIse</h1>
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
-      <button onClick={handleUpload} disabled={!file || loading} >
-        {loading ? 'Uploading...' : 'Upload & summarAIse'}
-      </button>
-      <h2>Summary</h2>
-      <p>{summary}</p>
+      <div className="container">
+        <div className="leftCol">
+          <div
+            className={`uploadZone ${isDragging ? 'dragging' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              className="inputFile"
+              type="file"
+              accept="application/pdf"
+              id="file"
+              onChange={(e) => setFile(e.target.files[0])}
+            />
+            <label htmlFor="file">Choose a file</label>
+          </div>
+          <button 
+            onClick={handleUpload}
+            disabled={!file || loading} 
+          >
+            {loading ? 'Uploading...' : 'Upload & summarAIse'}
+          </button>
+          <iframe src={pdfUrl} />
+        </div>
 
-      <div>
-        <input
-          type="text"
-          onChange={(e) => setQuestion(e.target.value)}
-        />
-        <button onClick={handleQuestion} disabled={question == '' || loading} >
-          {loading ? 'Answering...' : 'Ask'}
-        </button>
-        <h2>Answer</h2>
-        <p>{answer}</p>
+        <div className="rightCol">
+          <h2>Chat</h2>
+          <ul className="messages">
+            {listMessages}
+            <li ref={scrollRef}/>  
+          </ul>
+          <div className="inputRow">
+            <input
+              type="text"
+              id="query"
+              value = {question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key == 'Enter') {
+                  handleQuestion();
+                }
+              }}
+            />
+            <button onClick={handleQuestion} disabled={question == '' || loading || !docId} >
+              {loading ? 'Thinking...' : 'Ask'}
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
     </>
   )
