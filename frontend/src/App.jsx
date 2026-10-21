@@ -3,10 +3,10 @@ import './App.css'
 
 function App() {
   const [file, setFile] = useState(null);
-  const [docId, setDocId] = useState('');
+  const [docId, setDocId] = useState(() => localStorage.getItem('docId') || '');
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem('messages')) || []);
   const [isDragging, setIsDragging] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
 
@@ -14,6 +14,10 @@ function App() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({behaviour: 'smooth', block: 'nearest'})
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem('messages', JSON.stringify(messages));
   }, [messages]);
 
   // When a PDF is uploaded this hook updates the pdfUrl which we use to preview the file
@@ -45,6 +49,7 @@ function App() {
         ...messages,
         {role: 'ai', text: data.summary}
       ]);
+      localStorage.setItem('docId', data.doc_id);
 
     } catch (error) {
       console.error('Upload failed:', error);
