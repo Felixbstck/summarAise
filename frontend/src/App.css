@@ -1,3 +1,7 @@
+:root {
+  --bg-colour: #121212; /* unused but added it in case */
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
@@ -6,7 +10,7 @@ html, body, #root {
 }
 
 body {
-  background-color: #121212;
+  background-color: var(--bg-colour);
 }
 
 .app {
@@ -25,6 +29,7 @@ body {
 .leftCol, .rightCol {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -36,7 +41,7 @@ body {
 }
 
 .uploadZone {
-  border: 2px dashed #ccc;
+  border: 1px dashed #ccc;
   transition: border-color 0.2s, background-color 0.2s;
 }
 
@@ -78,23 +83,82 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+  text-align: left;
 }
 
-.messages li {
-  display: flow-root;
-  position: relative;
-}
-
-.messages li p {
-  padding: 10px;
-  border-radius: 25px;
+.bubble {
   width: fit-content;
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  overflow-wrap: anywhere
 }
 
-.messages .user p {
+.bubble h1, .bubble h2, .bubble h3 { 
+  font-size: 1.05em;
+  margin: 0.75em 0 0.4em;
+}
+
+.bubble code {
+  background: rgba(0,0,0,0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.user .bubble {
   margin-left: auto;
   background-color: rgb(32 32 31 / 75%);
   color: white;
 }
 
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  margin: 5px 5px 5px 2px;
+  border: 0.5px solid grey;
+  border-radius: 23px;
+}
 
+.inputRow textarea {
+  flex: 1;
+  min-width: 0;
+}
+
+
+#query {
+  field-sizing: content;
+  min-height: 25px;
+  max-height: 150px; 
+  overflow-y: auto;
+  resize: none;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  background: transparent;
+ 
+}
+
+#query:focus {
+  outline: none;
+  
+}
+
+.inputRow button {
+  background: transparent;
+  border: none;
+}
+
+.inputRow button:focus {
+  background-color: grey;
+  outline: none;
+  border-radius: 22px;
+}
+
+.inputRow button:hover {
+  background-color: grey;
+  outline: none;
+  border-radius: 22px;
+}

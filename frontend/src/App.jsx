@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
+import ReactMarkdown from 'react-markdown'
 
 function App() {
   const [file, setFile] = useState(null);
@@ -114,7 +115,7 @@ function App() {
     }
   };
 
-  const listMessages = messages.map((message, i) => <li key={i} className={message.role}><p>{message.text}</p></li>);
+  const listMessages = messages.map((message, i) => <li key={i} className={message.role}><div className="bubble"><ReactMarkdown>{message.text}</ReactMarkdown></div></li>);
 
   return (
     <>
@@ -153,13 +154,15 @@ function App() {
             <li ref={scrollRef}/>  
           </ul>
           <div className="inputRow">
-            <input
-              type="text"
+            <textarea
+              autocomplete="off"
+              rows={1}
               id="query"
               value = {question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key == 'Enter') {
+                if (e.key == 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
                   handleQuestion();
                 }
               }}
